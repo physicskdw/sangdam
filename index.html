@@ -2,72 +2,239 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>5월 상담 신청 안내</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; max-width: 800px; margin: 20px auto; text-align: center; }
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 20px; }
-        .day { border: 1px solid #ddd; padding: 10px; min-height: 100px; background: #f9f9f9; }
-        .day.off { background: #eee; color: #999; }
-        .date-num { font-weight: bold; margin-bottom: 5px; display: block; }
-        .slot-btn { display: block; width: 100%; margin: 2px 0; padding: 5px; font-size: 12px; cursor: pointer; border: none; border-radius: 3px; }
-        .available { background: #e3f2fd; color: #1976d2; }
-        .booked { background: #ffcdd2; color: #c62828; cursor: not-allowed; }
-        /* 팝업 스타일 */
-        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #000; z-index: 10; }
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        body { 
+            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; 
+            background-color: #f4f7f6; /* 부드러운 배경색 */
+            color: #333; 
+            max-width: 900px; 
+            margin: 40px auto; 
+            text-align: center; 
+        }
+        h2 { color: #2c3e50; font-weight: 700; margin-bottom: 10px; font-size: 28px; }
+        p { color: #666; margin-bottom: 30px; }
+        
+        /* 달력 전체 컨테이너 */
+        .calendar-container {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        /* 요일 표시줄 */
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            color: #555;
+            font-size: 15px;
+        }
+        .weekdays div:first-child { color: #e74c3c; } /* 일요일 빨간색 */
+        .weekdays div:last-child { color: #3498db; } /* 토요일 파란색 */
+
+        .calendar { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 10px; 
+        }
+        
+        /* 개별 날짜 칸 */
+        .day { 
+            border: 1px solid #eef2f5; 
+            padding: 10px 5px; 
+            min-height: 100px; 
+            background: #ffffff; 
+            border-radius: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .day:hover:not(.off) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+        }
+        .day.off { 
+            background: #f8f9fa; 
+            border-color: #f1f3f5;
+        }
+        
+        /* 날짜 숫자 */
+        .date-num { 
+            font-weight: 700; 
+            margin-bottom: 10px; 
+            display: inline-block;
+            font-size: 1.1em;
+            color: #2c3e50;
+        }
+        .day.off .date-num { color: #adb5bd; }
+        
+        /* 신청 버튼 */
+        .slot-btn { 
+            display: block; 
+            width: 90%; 
+            margin: 4px auto; 
+            padding: 8px 0; 
+            font-size: 12px; 
+            font-weight: 500;
+            cursor: pointer; 
+            border: none; 
+            border-radius: 6px; 
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .available { 
+            background: #e3f2fd; 
+            color: #1565c0; 
+        }
+        .available:hover {
+            background: #bbdefb;
+            color: #0d47a1;
+        }
+        .booked { 
+            background: #ffebee; 
+            color: #c62828; 
+            cursor: not-allowed; 
+        }
+
+        /* 팝업창(모달) 및 배경 스타일 */
+        #overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.4); 
+            backdrop-filter: blur(3px); /* 배경 흐림 효과 */
+            z-index: 5; 
+        }
+        #modal { 
+            display: none; 
+            position: fixed; 
+            top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: white; 
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2); 
+            z-index: 10;
+            width: 90%;
+            max-width: 360px;
+            text-align: left;
+        }
+        #modal h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 2px solid #f4f7f6;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        #modal input, #modal textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        #modal input:focus, #modal textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-group button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-submit { background: #3498db; color: white; }
+        .btn-submit:hover { background: #2980b9; }
+        .btn-cancel { background: #e9ecef; color: #495057; }
+        .btn-cancel:hover { background: #dee2e6; }
     </style>
 </head>
 <body>
     <h2>📅 5월 상담 신청 현황</h2>
     <p>원하는 날짜의 시간을 선택하여 신청해 주세요.</p>
-    <div id="calendar" class="calendar"></div>
+    
+    <div class="calendar-container">
+        <div class="weekdays">
+            <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+        </div>
+        <div id="calendar" class="calendar"></div>
+    </div>
 
     <div id="overlay"></div>
     <div id="modal">
         <h3 id="modal-title">상담 신청</h3>
-        <input type="text" id="stuId" placeholder="학번 (예: 2101)"><br><br>
-        <input type="text" id="stuName" placeholder="이름"><br><br>
-        <textarea id="stuContent" placeholder="상담 희망 내용" rows="4"></textarea><br><br>
-        <button onclick="submitForm()">신청하기</button>
-        <button onclick="closeModal()">취소</button>
+        <input type="text" id="stuId" placeholder="학번 (예: 2101)">
+        <input type="text" id="stuName" placeholder="이름">
+        <textarea id="stuContent" placeholder="간단한 상담 희망 내용" rows="4"></textarea>
+        
+        <div class="btn-group">
+            <button class="btn-cancel" onclick="closeModal()">취소</button>
+            <button class="btn-submit" onclick="submitForm()">신청하기</button>
+        </div>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVo49EhMfxRey_p3mhEvhNp5knY6YDAE41ZjSTKtuxU8ToEpB8ssiR3vpFPQmd24bq6g/exec"; // 여기에 웹 앱 URL 붙여넣기
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVo49EhMfxRey_p3mhEvhNp5knY6YDAE41ZjSTKtuxU8ToEpB8ssiR3vpFPQmd24bq6g/exec";
         const excludeDates = ['2026-05-01', '2026-05-04', '2026-05-05', '2026-05-15', '2026-05-22', '2026-05-25'];
         let selectedDate = "";
         let selectedTime = "";
 
         async function loadCalendar() {
-            const response = await fetch(SCRIPT_URL);
-            const reserved = await response.json();
-            const calDiv = document.getElementById('calendar');
-            
-            const daysInMay = 31;
-            const startDay = new Date(2026, 4, 1).getDay(); // 2026년 5월 1일은 금요일(5)
-
-            // 빈 칸 채우기
-            for(let i=0; i<startDay; i++) calDiv.innerHTML += '<div></div>';
-
-            for(let d=1; d<=daysInMay; d++) {
-                const dateStr = `2026-05-${String(d).padStart(2, '0')}`;
-                const dateObj = new Date(dateStr);
-                const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
-                const isOff = isWeekend || excludeDates.includes(dateStr);
-
-                let html = `<div class="day ${isOff ? 'off' : ''}"><span class="date-num">${d}</span>`;
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const reserved = await response.json();
+                const calDiv = document.getElementById('calendar');
                 
-                if(!isOff) {
-                    ['점심시간', '방과후'].forEach(time => {
-                        const key = `${dateStr}_${time}`;
-                        const isBooked = reserved[key];
-                        html += `<button class="slot-btn ${isBooked ? 'booked' : 'available'}" 
-                                 ${isBooked ? 'disabled' : `onclick="openModal('${dateStr}', '${time}')"`}>
-                                 ${time}${isBooked ? ' (마감)' : ''}</button>`;
-                    });
+                const daysInMay = 31;
+                const startDay = new Date(2026, 4, 1).getDay(); // 2026년 5월 1일은 금요일(5)
+
+                // 빈 칸 채우기 (디자인 유지를 위해 class 추가)
+                for(let i=0; i<startDay; i++) {
+                    calDiv.innerHTML += '<div class="day off"></div>';
                 }
-                html += `</div>`;
-                calDiv.innerHTML += html;
+
+                for(let d=1; d<=daysInMay; d++) {
+                    const dateStr = `2026-05-${String(d).padStart(2, '0')}`;
+                    // 날짜 계산 오류를 막기 위해 연/월/일 분리 입력
+                    const dateObj = new Date(2026, 4, d); 
+                    const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+                    const isOff = isWeekend || excludeDates.includes(dateStr);
+
+                    let html = `<div class="day ${isOff ? 'off' : ''}"><span class="date-num">${d}</span>`;
+                    
+                    if(!isOff) {
+                        ['점심시간', '방과후'].forEach(time => {
+                            const key = `${dateStr}_${time}`;
+                            const isBooked = reserved[key];
+                            html += `<button class="slot-btn ${isBooked ? 'booked' : 'available'}" 
+                                     ${isBooked ? 'disabled' : `onclick="openModal('${dateStr}', '${time}')"`}>
+                                     ${time}${isBooked ? ' (마감)' : ''}</button>`;
+                        });
+                    }
+                    html += `</div>`;
+                    calDiv.innerHTML += html;
+                }
+            } catch (error) {
+                console.error("데이터 로드 실패:", error);
+                alert("상담 데이터를 불러오지 못했습니다. 잠시 후 새로고침 해주세요.");
             }
         }
 
@@ -82,26 +249,43 @@
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
             document.getElementById('overlay').style.display = 'none';
+            // 모달 닫을 때 입력값 초기화
+            document.getElementById('stuId').value = '';
+            document.getElementById('stuName').value = '';
+            document.getElementById('stuContent').value = '';
         }
 
         async function submitForm() {
             const data = {
                 date: selectedDate,
                 time: selectedTime,
-                studentId: document.getElementById('stuId').value,
-                name: document.getElementById('stuName').value,
-                content: document.getElementById('stuContent').value
+                studentId: document.getElementById('stuId').value.trim(),
+                name: document.getElementById('stuName').value.trim(),
+                content: document.getElementById('stuContent').value.trim()
             };
 
-            if(!data.studentId || !data.name) return alert("학번과 이름을 입력해주세요.");
+            if(!data.studentId || !data.name) {
+                return alert("학번과 이름을 모두 입력해주세요.");
+            }
 
-            const resp = await fetch(SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify(data)
-            });
-            const result = await resp.text();
-            alert(result);
-            location.reload();
+            // 신청 버튼 클릭 시 중복 클릭 방지를 위해 버튼 비활성화 시도 가능
+            const submitBtn = document.querySelector('.btn-submit');
+            submitBtn.innerText = "신청 중...";
+            submitBtn.disabled = true;
+
+            try {
+                const resp = await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify(data)
+                });
+                const result = await resp.text();
+                alert(result);
+                location.reload();
+            } catch (error) {
+                alert("신청 중 오류가 발생했습니다. 다시 시도해 주세요.");
+                submitBtn.innerText = "신청하기";
+                submitBtn.disabled = false;
+            }
         }
 
         loadCalendar();
