@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>5월 상담 신청 안내</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; max-width: 800px; margin: 20px auto; text-align: center; }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 20px; }
+        .day { border: 1px solid #ddd; padding: 10px; min-height: 100px; background: #f9f9f9; }
+        .day.off { background: #eee; color: #999; }
+        .date-num { font-weight: bold; margin-bottom: 5px; display: block; }
+        .slot-btn { display: block; width: 100%; margin: 2px 0; padding: 5px; font-size: 12px; cursor: pointer; border: none; border-radius: 3px; }
+        .available { background: #e3f2fd; color: #1976d2; }
+        .booked { background: #ffcdd2; color: #c62828; cursor: not-allowed; }
+        /* 팝업 스타일 */
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #000; z-index: 10; }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+    <h2>📅 5월 상담 신청 현황</h2>
+    <p>원하는 날짜의 시간을 선택하여 신청해 주세요.</p>
+    <div id="calendar" class="calendar"></div>
+
+    <div id="overlay"></div>
+    <div id="modal">
+        <h3 id="modal-title">상담 신청</h3>
+        <input type="text" id="stuId" placeholder="학번 (예: 30101)"><br><br>
+        <input type="text" id="stuName" placeholder="이름"><br><br>
+        <textarea id="stuContent" placeholder="상담 희망 내용" rows="4"></textarea><br><br>
+        <button onclick="submitForm()">신청하기</button>
+        <button onclick="closeModal()">취소</button>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVo49EhMfxRey_p3mhEvhNp5knY6YDAE41ZjSTKtuxU8ToEpB8ssiR3vpFPQmd24bq6g/exec"; // 여기에 웹 앱 URL 붙여넣기
+        const excludeDates = ['2026-05-01', '2026-05-04', '2026-05-05', '2026-05-15', '2026-05-22', '2026-05-25'];
+        let selectedDate = "";
+        let selectedTime = "";
+
+        async function loadCalendar() {
+            const response = await fetch(SCRIPT_URL);
+            const reserved = await response.json();
+            const calDiv = document.getElementById('calendar');
+            
+            const daysInMay = 31;
+            const startDay = new Date(2026, 4, 1).getDay(); // 2026년 5월 1일은 금요일(5)
+
+            // 빈 칸 채우기
+            for(let i=0; i<startDay; i++) calDiv.innerHTML += '<div></div>';
+
+            for(let d=1; d<=daysInMay; d++) {
+                const dateStr = `2026-05-${String(d).padStart(2, '0')}`;
+                const dateObj = new Date(dateStr);
+                const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+                const isOff = isWeekend || excludeDates.includes(dateStr);
+
+                let html = `<div class="day ${isOff ? 'off' : ''}"><span class="date-num">${d}</span>`;
+                
+                if(!isOff) {
+                    ['점심시간', '방과후'].forEach(time => {
+                        const key = `${dateStr}_${time}`;
+                        const isBooked = reserved[key];
+                        html += `<button class="slot-btn ${isBooked ? 'booked' : 'available'}" 
+                                 ${isBooked ? 'disabled' : `onclick="openModal('${dateStr}', '${time}')"`}>
+                                 ${time}${isBooked ? ' (마감)' : ''}</button>`;
+                    });
+                }
+                html += `</div>`;
+                calDiv.innerHTML += html;
+            }
+        }
+
+        function openModal(date, time) {
+            selectedDate = date;
+            selectedTime = time;
+            document.getElementById('modal-title').innerText = `${date} ${time} 신청`;
+            document.getElementById('modal').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        async function submitForm() {
+            const data = {
+                date: selectedDate,
+                time: selectedTime,
+                studentId: document.getElementById('stuId').value,
+                name: document.getElementById('stuName').value,
+                content: document.getElementById('stuContent').value
+            };
+
+            if(!data.studentId || !data.name) return alert("학번과 이름을 입력해주세요.");
+
+            const resp = await fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(data)
+            });
+            const result = await resp.text();
+            alert(result);
+            location.reload();
+        }
+
+        loadCalendar();
+    </script>
+</body>
+</html>
